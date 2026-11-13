@@ -4,6 +4,7 @@ import sys
 
 from .config import load_config, print_config
 from .graph import load_test_graph
+from .load_order import load_order
 from .traversal import dfs_traverse
 
 
@@ -27,18 +28,24 @@ def main(argv=None) -> int:
 
     print_config(cfg)
 
-    print("\nПостроение графа и DFS-обход:")
     try:
-       
         if cfg.test_mode:
             graph = load_test_graph(cfg.repo_url)
+            
+            print("\nDFS-обход:")
             traversal = dfs_traverse(graph, cfg.package_name, 
                                      cfg.max_depth)
             for node, depth in traversal:
                 print(f"  {node} (глубина {depth})")
+
+            print("\nПорядок загрузки:")
+            order = load_order(graph, cfg.package_name, 
+                               cfg.max_depth)
+            for name in order:
+                print(f"  {name}")
         else:
             print("  (Режим реального репозитория будет в след. этапах)")
-    except Exception as exc: 
+    except Exception as exc:
         print(f"Ошибка графа: {exc}", file=sys.stderr)
         return 1
 
