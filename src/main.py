@@ -2,8 +2,9 @@
 import argparse
 import sys
 
-from .cargo_client import get_direct_dependencies
 from .config import load_config, print_config
+from .graph import load_test_graph
+from .traversal import dfs_traverse
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,17 +27,19 @@ def main(argv=None) -> int:
 
     print_config(cfg)
 
-    print("\nПрямые зависимости:")
+    print("\nПостроение графа и DFS-обход:")
     try:
-        deps = get_direct_dependencies(
-            cfg.package_name, cfg.package_version,
-            cfg.repo_url, cfg.test_mode)
-        if not deps:
-            print("  (нет зависимостей)")
-        for dep in deps:
-            print(f"  - {dep}")
-    except Exception as exc:  # noqa: BLE001
-        print(f"Ошибка получения данных: {exc}", file=sys.stderr)
+       
+        if cfg.test_mode:
+            graph = load_test_graph(cfg.repo_url)
+            traversal = dfs_traverse(graph, cfg.package_name, 
+                                     cfg.max_depth)
+            for node, depth in traversal:
+                print(f"  {node} (глубина {depth})")
+        else:
+            print("  (Режим реального репозитория будет в след. этапах)")
+    except Exception as exc: 
+        print(f"Ошибка графа: {exc}", file=sys.stderr)
         return 1
 
     return 0
